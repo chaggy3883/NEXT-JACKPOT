@@ -1,4 +1,9 @@
-pip install beautifulsoup4
 streamlit
 pandas
+random
+requests
+beautifulsoup4
+google-auth-httplib2
+google-auth-oauthlib
+google-api-python-client
 openpyxl
