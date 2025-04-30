@@ -1,6 +1,5 @@
 streamlit
 pandas
-random
 requests
 beautifulsoup4==4.12.2 
 google-auth-httplib2
