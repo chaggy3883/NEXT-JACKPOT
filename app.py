@@ -199,8 +199,10 @@ else:
 
 # Optional CSV download
 if not df_out.empty:
-    # Ensure that 'White Balls' column is a string and split it into separate columns
+    # Ensure that 'White Balls' column is a string before splitting
     df_out['White Balls'] = df_out['White Balls'].apply(lambda x: ', '.join(map(str, x)) if isinstance(x, list) else str(x))
+    
+    # Split 'White Balls' into separate columns
     df_out[['White Balls', extra_label]] = df_out['White Balls'].str.split(",", 5, expand=True)
     
     # Prepare CSV for download
@@ -211,5 +213,6 @@ if not df_out.empty:
         file_name='predictions.csv',
         mime='text/csv'
     )
+
 
 
