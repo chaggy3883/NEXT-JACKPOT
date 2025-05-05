@@ -14,7 +14,7 @@ st.title("🌰 NEXT JACKPOT")
 # --- Feature Guide ---
 with st.expander("ℹ️ How It Works / Feature Guide"):
     st.markdown("""
-    **🎟️ Lucky Pick vs. 🎲 High Roller**
+    **🎟️ Lucky Pick vs. 🌲 High Roller**
 
     - **Lucky Pick**: Quick picks from the most frequent balls.
     - **High Roller**: More control with advanced features.
@@ -42,7 +42,7 @@ with st.expander("ℹ️ How It Works / Feature Guide"):
     """)
 
 # --- User Access ---
-user_type = st.sidebar.radio("Select Access Level:", ["🎟️ Lucky Pick", "🎲 High Roller"])
+user_type = st.sidebar.radio("Select Access Level:", ["🎟️ Lucky Pick", "🌲 High Roller"])
 
 # --- Game Type Selection ---
 game_type = st.selectbox("Choose your game:", ["Powerball", "Mega Millions"])
@@ -132,7 +132,6 @@ with st.spinner("Loading game data..."):
 if df is None:
     st.stop()
 
-# Show jackpot
 st.write(f"**Current Jackpot:** {format_jackpot(df['Current Jackpot'].iloc[0])}")
 
 # Show last drawing
@@ -141,7 +140,6 @@ date = latest['Draw Date'].strftime("%m/%d/%y")
 st.subheader(f"Latest Drawing: {date}")
 st.write("Winning Numbers:", ', '.join(map(str, latest['White Balls'])), f"| {extra_label}: {latest[extra_col]}")
 
-# Show if there was a winner
 if pd.isnull(latest['Winner']) or latest['Winner'] == 0:
     st.write("Winner's Jackpot: No Winners")
 else:
@@ -162,14 +160,18 @@ st.bar_chart(white_freq)
 st.write(f"{extra_label} History:")
 st.bar_chart(extra_freq)
 
-# Prediction
+# Predictions
+df_out = pd.DataFrame()
 st.subheader("Your Prediction")
 
 if user_type == "🎟️ Lucky Pick":
     if st.button("Generate Lucky Pick Predictions"):
+        results = []
         for _ in range(5):
             nums, extra = generate_standard_prediction(white_freq, extra_freq)
-            st.write(','.join(map(str, nums)), extra)
+            results.append({'White Balls': ','.join(map(str, nums)), extra_label: extra})
+        df_out = pd.DataFrame(results)
+        st.dataframe(df_out)
 else:
     st.markdown("**🎖️ VIP High Roller Tools**")
     mode = st.radio("Choose Prediction Mode:", ["🌟 Standard Mode", "🔮 Smart Picker", "❄️ Cold Balls Only"])
@@ -183,6 +185,7 @@ else:
     lines = st.slider("How many prediction lines?", 1, 10, 1)
 
     if st.button("Generate High Roller Predictions"):
+        results = []
         for _ in range(lines):
             if mode == "🌟 Standard Mode":
                 nums, extra = generate_standard_prediction(white_freq, extra_freq, top_white_count, top_extra_count)
@@ -190,5 +193,16 @@ else:
                 nums, extra = generate_recent_based_prediction(df, 'White Balls', extra_col, weeks, mode="hot")
             else:
                 nums, extra = generate_recent_based_prediction(df, 'White Balls', extra_col, weeks, mode="cold")
-            st.write(','.join(map(str, nums)), extra)
+            results.append({'White Balls': ','.join(map(str, nums)), extra_label: extra})
+        df_out = pd.DataFrame(results)
+        st.dataframe(df_out)
 
+# Optional CSV download
+if not df_out.empty:
+    csv = df_out.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        label="📅 Download as CSV",
+        data=csv,
+        file_name='predictions.csv',
+        mime='text/csv'
+    )
