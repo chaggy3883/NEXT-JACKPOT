@@ -9,42 +9,10 @@ from urllib3.util.retry import Retry
 
 # --- App Setup ---
 st.set_page_config(page_title="Next Jackpot", layout="wide")
-st.title("🌰 NEXT JACKPOT")
-
-# --- Feature Guide ---
-with st.expander("ℹ️ How It Works / Feature Guide"):
-    st.markdown("""
-    **🎟️ Lucky Pick vs. 🌲 High Roller**
-
-    - **Lucky Pick**: Quick picks from the most frequent balls.
-    - **High Roller**: More control with advanced features.
-
-    ---
-
-    **🔮 Smart Picker Mode**
-    - Auto-selects balls that appeared most frequently in the last *X weeks* (you choose up to 12 weeks).
-    - Useful for spotting hot number trends.
-
-    **❄️ Cold Balls Only Mode**
-    - Only uses balls that **haven’t hit** in the last *X weeks*.
-    - Designed for people who believe cold numbers are “due.”
-
-    **📊 Top Ball Sliders**
-    - Adjusts how many of the top frequent balls are in the prediction pool.
-
-    **🪄 Custom Prediction Lines**
-    - Choose how many sets of predictions you want (up to 10 lines).
-
-    **🎖️ VIP Badge (High Roller flair)**
-    - Just for style 😎
-
-    More features coming soon...
-    """)
+st.title("🎰 NEXT JACKPOT")
 
 # --- User Access ---
-user_type = st.sidebar.radio("Select Access Level:", ["🎟️ Lucky Pick", "🌲 High Roller"])
-
-# --- Game Type Selection ---
+user_type = st.sidebar.radio("Select Access Level:", ["🎟️ Lucky Pick", "🎲 High Roller"])
 game_type = st.selectbox("Choose your game:", ["Powerball", "Mega Millions"])
 
 # --- File IDs ---
@@ -72,7 +40,6 @@ def download_file(file_id):
         st.error(f"⚠️ Failed to load data from Google Drive: {e}")
         return None
 
-# --- Format Jackpot ---
 def format_jackpot(jackpot_amount):
     try:
         jackpot_amount = float(jackpot_amount)
@@ -80,14 +47,12 @@ def format_jackpot(jackpot_amount):
     except:
         return jackpot_amount
 
-# --- Get game limits ---
 def get_ball_ranges(game_type):
     if game_type == "Mega Millions":
         return 70, 24
     else:
         return 69, 26
 
-# --- Prediction Functions ---
 def generate_standard_prediction(white_freq, extra_freq, top_white_count=25, top_extra_count=15):
     top_white = white_freq.head(top_white_count).index.tolist()
     top_extra = extra_freq.head(top_extra_count).index.tolist()
@@ -121,7 +86,7 @@ def generate_recent_based_prediction(df, white_col, extra_col, weeks_back, mode=
 
     return sorted(random.sample(top_white, 5)), random.choice(top_extra)
 
-# --- Main Logic ---
+# --- Main ---
 file_id = powerball_file_id if game_type == "Powerball" else megamillions_file_id
 extra_label = "Powerball" if game_type == "Powerball" else "Mega Ball"
 extra_col = extra_label
@@ -132,77 +97,44 @@ with st.spinner("Loading game data..."):
 if df is None:
     st.stop()
 
-st.write(f"**Current Jackpot:** {format_jackpot(df['Current Jackpot'].iloc[0])}")
-
-# Show last drawing
-latest = df.iloc[0]
-date = latest['Draw Date'].strftime("%m/%d/%y")
-st.subheader(f"Latest Drawing: {date}")
-st.write("Winning Numbers:", ', '.join(map(str, latest['White Balls'])), f"| {extra_label}: {latest[extra_col]}")
-
-if pd.isnull(latest['Winner']) or latest['Winner'] == 0:
-    st.write("Winner's Jackpot: No Winners")
-else:
-    st.write(f"Winner's Jackpot: {format_jackpot(latest['Jackpot'])}")
-
-# Frequency Charts
-st.subheader("Ball Frequency Chart")
+# Prepare frequency data
 max_white, max_extra = get_ball_ranges(game_type)
-
 white_freq = pd.Series(sum(df['White Balls'], [])).value_counts().sort_index()
 white_freq = white_freq[white_freq.index <= max_white]
-
 extra_freq = df[extra_col].value_counts().sort_index()
 extra_freq = extra_freq[extra_freq.index <= max_extra]
 
-st.write("White Balls History:")
-st.bar_chart(white_freq)
-st.write(f"{extra_label} History:")
-st.bar_chart(extra_freq)
+# --- Prediction Output ---
+st.subheader("Your Predictions (copy and paste into Excel)")
 
-# Predictions
-df_out = pd.DataFrame()
-st.subheader("Your Prediction")
-
+predictions = []
 if user_type == "🎟️ Lucky Pick":
     if st.button("Generate Lucky Pick Predictions"):
-        results = []
         for _ in range(5):
             nums, extra = generate_standard_prediction(white_freq, extra_freq)
-            results.append({'White Balls': ','.join(map(str, nums)), extra_label: extra})
-        df_out = pd.DataFrame(results)
-        st.dataframe(df_out)
-else:
-    st.markdown("**🎖️ VIP High Roller Tools**")
-    mode = st.radio("Choose Prediction Mode:", ["🌟 Standard Mode", "🔮 Smart Picker", "❄️ Cold Balls Only"])
-
-    if mode == "🌟 Standard Mode":
+            line = f"{','.join(map(str, nums))}\t{extra}"
+            predictions.append(line)
+elif user_type == "🎲 High Roller":
+    mode = st.radio("Choose Prediction Mode:", ["🎯 Standard Mode", "🔮 Smart Picker", "❄️ Cold Balls Only"])
+    lines = st.slider("How many prediction lines?", 1, 10, 5)
+    if mode == "🎯 Standard Mode":
         top_white_count = st.slider("Top White Balls", 5, max_white, 25)
         top_extra_count = st.slider(f"Top {extra_label}s", 1, max_extra, 15)
     else:
         weeks = st.slider("Look back over how many weeks?", 1, 12, 4)
 
-    lines = st.slider("How many prediction lines?", 1, 10, 1)
-
     if st.button("Generate High Roller Predictions"):
-        results = []
         for _ in range(lines):
-            if mode == "🌟 Standard Mode":
+            if mode == "🎯 Standard Mode":
                 nums, extra = generate_standard_prediction(white_freq, extra_freq, top_white_count, top_extra_count)
             elif mode == "🔮 Smart Picker":
                 nums, extra = generate_recent_based_prediction(df, 'White Balls', extra_col, weeks, mode="hot")
             else:
                 nums, extra = generate_recent_based_prediction(df, 'White Balls', extra_col, weeks, mode="cold")
-            results.append({'White Balls': ','.join(map(str, nums)), extra_label: extra})
-        df_out = pd.DataFrame(results)
-        st.dataframe(df_out)
+            line = f"{','.join(map(str, nums))}\t{extra}"
+            predictions.append(line)
 
-# Optional CSV download
-if not df_out.empty:
-    csv = df_out.to_csv(index=False).encode('utf-8')
-    st.download_button(
-        label="📅 Download as CSV",
-        data=csv,
-        file_name='predictions.csv',
-        mime='text/csv'
-    )
+# Show predictions in a copyable format
+if predictions:
+    st.text_area("Copy below:", "\n".join(predictions), height=200)
+
