@@ -199,11 +199,11 @@ else:
 
 # Optional CSV download
 if not df_out.empty:
-    # Ensure that 'White Balls' column is a string before splitting
+    # Ensure 'White Balls' column is formatted correctly
     df_out['White Balls'] = df_out['White Balls'].apply(lambda x: ', '.join(map(str, x)) if isinstance(x, list) else str(x))
     
-    # Split 'White Balls' into separate columns
-    df_out[['White Balls', extra_label]] = df_out['White Balls'].str.split(",", 5, expand=True)
+    # Split 'White Balls' into separate columns using Excel-friendly handling
+    df_out[['White Ball 1', 'White Ball 2', 'White Ball 3', 'White Ball 4', 'White Ball 5']] = df_out['White Balls'].str.split(",", 5, expand=True)
     
     # Prepare CSV for download
     csv = df_out.to_csv(index=False).encode('utf-8')
