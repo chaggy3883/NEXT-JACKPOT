@@ -169,7 +169,7 @@ if user_type == "🎟️ Lucky Pick":
         results = []
         for _ in range(5):
             nums, extra = generate_standard_prediction(white_freq, extra_freq)
-            results.append({'White Balls': ', '.join(map(str, nums)), extra_label: extra})
+            results.append({'White Balls': ','.join(map(str, nums)), extra_label: extra})
         df_out = pd.DataFrame(results)
         st.dataframe(df_out)
 else:
@@ -193,13 +193,14 @@ else:
                 nums, extra = generate_recent_based_prediction(df, 'White Balls', extra_col, weeks, mode="hot")
             else:
                 nums, extra = generate_recent_based_prediction(df, 'White Balls', extra_col, weeks, mode="cold")
-            results.append({'White Balls': ', '.join(map(str, nums)), extra_label: extra})
+            results.append({'White Balls': ','.join(map(str, nums)), extra_label: extra})
         df_out = pd.DataFrame(results)
         st.dataframe(df_out)
 
 # Optional CSV download
 if not df_out.empty:
-    # Split the special ball into its own column for easy copy-pasting
+    # Ensure that 'White Balls' column is a string and split it into separate columns
+    df_out['White Balls'] = df_out['White Balls'].apply(lambda x: ', '.join(map(str, x)) if isinstance(x, list) else str(x))
     df_out[['White Balls', extra_label]] = df_out['White Balls'].str.split(",", 5, expand=True)
     
     # Prepare CSV for download
@@ -210,4 +211,5 @@ if not df_out.empty:
         file_name='predictions.csv',
         mime='text/csv'
     )
+
 
