@@ -9,7 +9,7 @@ from urllib3.util.retry import Retry
 
 # --- App Setup ---
 st.set_page_config(page_title="Next Jackpot", layout="wide")
-st.title("🎰 NEXT JACKPOT")
+st.title("🌰 NEXT JACKPOT")
 
 # --- Feature Guide ---
 with st.expander("ℹ️ How It Works / Feature Guide"):
@@ -139,8 +139,7 @@ st.write(f"**Current Jackpot:** {format_jackpot(df['Current Jackpot'].iloc[0])}"
 latest = df.iloc[0]
 date = latest['Draw Date'].strftime("%m/%d/%y")
 st.subheader(f"Latest Drawing: {date}")
-st.write("Winning Numbers:", ', '.join(map(str, latest['White Balls'])),
-         f"| {extra_label}: {latest[extra_col]}")
+st.write("Winning Numbers:", ', '.join(map(str, latest['White Balls'])), f"| {extra_label}: {latest[extra_col]}")
 
 # Show if there was a winner
 if pd.isnull(latest['Winner']) or latest['Winner'] == 0:
@@ -170,12 +169,12 @@ if user_type == "🎟️ Lucky Pick":
     if st.button("Generate Lucky Pick Predictions"):
         for _ in range(5):
             nums, extra = generate_standard_prediction(white_freq, extra_freq)
-            st.write("Your Numbers:", ', '.join(map(str, nums)), f"| {extra_label}: {extra}")
+            st.write(','.join(map(str, nums)), extra)
 else:
     st.markdown("**🎖️ VIP High Roller Tools**")
-    mode = st.radio("Choose Prediction Mode:", ["🎯 Standard Mode", "🔮 Smart Picker", "❄️ Cold Balls Only"])
+    mode = st.radio("Choose Prediction Mode:", ["🌟 Standard Mode", "🔮 Smart Picker", "❄️ Cold Balls Only"])
 
-    if mode == "🎯 Standard Mode":
+    if mode == "🌟 Standard Mode":
         top_white_count = st.slider("Top White Balls", 5, max_white, 25)
         top_extra_count = st.slider(f"Top {extra_label}s", 1, max_extra, 15)
     else:
@@ -185,10 +184,11 @@ else:
 
     if st.button("Generate High Roller Predictions"):
         for _ in range(lines):
-            if mode == "🎯 Standard Mode":
+            if mode == "🌟 Standard Mode":
                 nums, extra = generate_standard_prediction(white_freq, extra_freq, top_white_count, top_extra_count)
             elif mode == "🔮 Smart Picker":
                 nums, extra = generate_recent_based_prediction(df, 'White Balls', extra_col, weeks, mode="hot")
             else:
                 nums, extra = generate_recent_based_prediction(df, 'White Balls', extra_col, weeks, mode="cold")
-            st.write("Your Numbers:", ', '.join(map(str, nums)), f"| {extra_label}: {extra}")
+            st.write(','.join(map(str, nums)), extra)
+
